@@ -9,6 +9,15 @@ echo "Configuring Apache2 environment variables..."
 # Set ServerName of created container
 export APACHE_SERVERNAME="${APACHE_SERVERNAME:-$(cat /etc/hostname)}"
 
+# Docksal: copy custom settings (if mounted) from /var/www/.docksal/etc/apache/httpd.conf and fix permissions
+project_config_file='/var/www/.docksal/etc/apache/httpd.conf'
+echo "Including custom configuration from ${project_config_file}"
+if [[ -f ${project_config_file} ]]; then
+    cp -a ${project_config_file} /usr/local/apache2/conf/httpd.conf
+    chown -R root:root /usr/local/apache2/conf/*
+    chmod -R 644 /usr/local/apache2/conf/*
+fi
+
 # Basic HTTP Authentication
 if [[ "$APACHE_BASIC_AUTH_USER" != "" ]] && [[ "$APACHE_BASIC_AUTH_PASS" != "" ]]; then
 	echo "Enabling Basic HTTP Authentication [$APACHE_BASIC_AUTH_USER:$APACHE_BASIC_AUTH_PASS]"
