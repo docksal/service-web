@@ -26,7 +26,7 @@ include_conf ()
 
 	if [[ -f "$file" ]]; then
 		echo "Including configuration overrides from $file"
-		cp "$file" /etc/nginx/custom/
+		cp "$file" /etc/nginx/custom
 	fi
 }
 
