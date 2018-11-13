@@ -1,0 +1,40 @@
+#!/bin/sh
+set -e
+
+# Remove nginx PID file before web server start
+rm -f /var/run/nginx.pid >/dev/null 2>&1
+
+# nginx does not support ENV variables in configs. Here we replace variable names with values
+for config in $(find /etc/nginx/ -name "*.conf")
+do
+    for variable in $(printenv)
+    do
+    var=$(echo $variable | cut -d'=' -f1)
+    sed -i 's#${'${var}'}#'$(eval echo \$$var)'#g' ${config}
+    done
+done
+
+echo "Configuring nginx environment variables..."
+
+# Support for configuration overrides
+include_conf ()
+{
+	file=$1
+
+	if [[ -f "$file" ]]; then
+		echo "Including configuration overrides from $file"
+		cp "$file" /etc/nginx/custom/
+	fi
+}
+
+include_conf "/var/www/.docksal/etc/nginx/httpd-vhost-overrides.conf"
+include_conf "/var/www/.docksal/etc/nginx/httpd-vhosts.conf"
+
+# Basic HTTP Authentication
+if [[ "$APACHE_BASIC_AUTH_USER" != "" ]] && [[ "$APACHE_BASIC_AUTH_PASS" != "" ]]; then
+	echo "Enabling Basic HTTP Authentication [$APACHE_BASIC_AUTH_USER:$APACHE_BASIC_AUTH_PASS]"
+	echo "$APACHE_BASIC_AUTH_USER:$(echo $APACHE_BASIC_AUTH_PASS | mkpasswd -m md5)" >/etc/nginx/htpasswd
+	mv -f /etc/nginx/includes/basic-auth.tpl /etc/nginx/includes/basic-auth.conf
+fi
+
+exec nginx -g "daemon off;"

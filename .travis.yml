@@ -7,6 +7,7 @@ env:
   matrix:
     - VERSION=apache2.2
     - VERSION=apache2.4
+    - VERSION=nginx1.12
 
 install:
   - curl -fsSL get.docksal.io | bash
